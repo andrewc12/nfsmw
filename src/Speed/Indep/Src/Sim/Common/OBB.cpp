@@ -1,6 +1,7 @@
 #include "../OBB.h"
 #include "Speed/Indep/Libs/Support/Utility/UMath.h"
 #include "Speed/Indep/Libs/Support/Utility/UVectorMath.h"
+#include <cmath>
 
 OBB::OBB() {}
 
@@ -88,33 +89,33 @@ bool OBB::CheckOBBOverlap(OBB *other) {
 bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
     UMath::Vector4 rel_position;
     UMath::Vector4 a_normal;
+    UMath::Vector4 *b_extent;
     UMath::Vector4 collision_point;
     float projected_interval;
     float b_projected_interval;
-    UMath::Vector4 *b_extent;
-    int iVar11 = 0;
-    OBB *pOVar10 = obbB;
-    OBB *pOVar8 = obbA;
+    int cycle = 0;
+    OBB *a = obbA;
+    OBB *b = obbB;
 
     result->penetration_depth = -100000.0f;
 
     do {
-        if (iVar11 == 1) {
-            pOVar10 = obbA;
-            pOVar8 = obbB;
+        if (cycle == 1) {
+            a = obbB;
+            b = obbA;
         }
 
-        int iVar9 = 0;
+        int a_lp = 0;
         do {
-            int iVar6 = 2;
-            if ((iVar9 != 1) && (iVar6 = 1, iVar9 != 2)) {
-                iVar6 = 0;
+            int a_normal_index = 2;
+            if (a_lp != 1) {
+                a_normal_index = (a_lp == 2);
             }
 
-            a_normal = pOVar8->normal[iVar6];
-            collision_point = pOVar10->position;
+            a_normal = a->normal[a_normal_index];
+            collision_point = b->position;
 
-            VU0_v4subxyz(pOVar8->position, pOVar10->position, rel_position);
+            VU0_v4subxyz(a->position, b->position, rel_position);
             projected_interval = VU0_v4dotprodxyz(rel_position, a_normal);
 
             if (projected_interval < 0.0f) {
@@ -125,23 +126,25 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
                 a_normal.z = -a_normal.z;
             }
 
-            projected_interval = projected_interval - pOVar8->dimension[iVar6];
+            projected_interval = projected_interval - a->dimension[a_normal_index];
 
-            int iVar7 = 0;
-            b_extent = pOVar10->extent;
+            int b_normal_index = 0;
+            b_extent = b->extent;
             do {
                 b_projected_interval = VU0_v3dotprod(UMath::Vector4To3(a_normal), UMath::Vector4To3(*b_extent));
-                projected_interval = projected_interval - VU0_fabs(b_projected_interval);
+                projected_interval = projected_interval - fabsf(b_projected_interval);
 
-                if (0.0f < b_projected_interval) {
+                if (b_projected_interval <= 0.0f) {
+                    if (b_projected_interval < 0.0f) {
+                        VU0_v4addxyz(collision_point, *b_extent, collision_point);
+                    }
+                } else {
                     VU0_v4subxyz(collision_point, *b_extent, collision_point);
-                } else if (b_projected_interval < 0.0f) {
-                    VU0_v4addxyz(collision_point, *b_extent, collision_point);
                 }
 
-                iVar7 = iVar7 + 1;
+                b_normal_index = b_normal_index + 1;
                 b_extent = b_extent + 1;
-            } while (iVar7 < 3);
+            } while (b_normal_index < 3);
 
             if (0.0f < projected_interval) {
                 return false;
@@ -151,7 +154,7 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
                 result->penetration_depth = projected_interval;
                 result->collision_point = collision_point;
 
-                if (result != pOVar8) {
+                if (result != a) {
                     a_normal.x = -a_normal.x;
                     a_normal.y = -a_normal.y;
                     a_normal.z = -a_normal.z;
@@ -160,11 +163,11 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
                 result->collision_normal = a_normal;
             }
 
-            iVar9 = iVar9 + 1;
-        } while (iVar9 < 3);
+            a_lp = a_lp + 1;
+        } while (a_lp < 3);
 
-        iVar11 = iVar11 + 1;
-        if (1 < iVar11) {
+        cycle = cycle + 1;
+        if (1 < cycle) {
             return true;
         }
     } while (true);
