@@ -86,7 +86,8 @@ bool OBB::CheckOBBOverlap(OBB *other) {
 }
 
 bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
-    UMath::Vector4 rel_position;
+    UMath::Vector4 temp_vec1;
+    UMath::Vector4 temp_vec2;
     UMath::Vector4 a_normal;
     UMath::Vector4 collision_point;
     float projected_interval;
@@ -112,14 +113,14 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
             if (axis_idx == 1) {
                 normal_idx = 2;
             } else {
-                normal_idx = (axis_idx ^ 2) == 0;
+                normal_idx = ((axis_idx ^ 2) == 0) ? 1 : 0;
             }
 
             a_normal = a->normal[normal_idx];
             collision_point = b->position;
 
-            VU0_v4subxyz(a->position, b->position, rel_position);
-            projected_interval = VU0_v4dotprodxyz(rel_position, a_normal);
+            VU0_v4subxyz(a->position, b->position, temp_vec1);
+            projected_interval = VU0_v4dotprodxyz(temp_vec1, a_normal);
 
             if (projected_interval < 0.0f) {
                 projected_interval = -projected_interval;
@@ -134,7 +135,7 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
             normal_idx = 0;
             do {
                 b_projected_interval = VU0_v3dotprod(UMath::Vector4To3(a_normal), UMath::Vector4To3(*b_extent));
-                float abs_val = b_projected_interval < 0.0f ? -b_projected_interval : b_projected_interval;
+                float abs_val = fabsf(b_projected_interval);
                 projected_interval = projected_interval - abs_val;
 
                 if (0.0f < b_projected_interval) {
