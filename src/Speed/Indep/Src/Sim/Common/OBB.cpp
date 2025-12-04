@@ -84,12 +84,105 @@ bool OBB::CheckOBBOverlap(OBB *other) {
     return true;
 }
 
-bool OBB::BoxVsBox(OBB *a, OBB *b, OBB *result) {
-    // TODO
+bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
+    OBB *a = obbA;
+    OBB *b = obbB;
+
+    for (int cycle = 0; cycle < 2; ++cycle) {
+        if (cycle == 1) {
+            a = obbB;
+            b = obbA;
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            int normal_idx;
+            if (i == 1) {
+                normal_idx = 2;
+            } else {
+                normal_idx = i ^ 2;
+                normal_idx = (normal_idx == 0) ? 1 : 0;
+            }
+
+            UMath::Vector4 axis = a->normal[normal_idx];
+
+            // Calculate diff = a->position - b->position
+            float diff_x = a->position.x - b->position.x;
+            float diff_y = a->position.y - b->position.y;
+            float diff_z = a->position.z - b->position.z;
+
+            // proj = dot(diff, axis)
+            float proj = diff_x * axis.x + diff_y * axis.y + diff_z * axis.z;
+
+            if (proj < 0.0f) {
+                proj = -proj;
+            } else {
+                axis.x = -axis.x;
+                axis.y = -axis.y;
+                axis.z = -axis.z;
+            }
+
+            proj -= a->dimension[normal_idx];
+
+            // Initialize collision point to b->position
+            float col_x = b->position.x;
+            float col_y = b->position.y;
+            float col_z = b->position.z;
+            float col_w = b->position.w;
+
+            // Process each extent
+            UMath::Vector4 *extent_ptr = b->extent;
+            for (int j = 0; j < 3; ++j) {
+                float extent_proj = axis.x * extent_ptr->x + axis.y * extent_ptr->y + axis.z * extent_ptr->z;
+
+                float abs_extent_proj = extent_proj;
+                if (abs_extent_proj < 0.0f) {
+                    abs_extent_proj = -abs_extent_proj;
+                }
+                proj -= abs_extent_proj;
+
+                if (extent_proj > 0.0f) {
+                    col_x -= extent_ptr->x;
+                    col_y -= extent_ptr->y;
+                    col_z -= extent_ptr->z;
+                    col_w -= extent_ptr->w;
+                } else if (extent_proj < 0.0f) {
+                    col_x += extent_ptr->x;
+                    col_y += extent_ptr->y;
+                    col_z += extent_ptr->z;
+                    col_w += extent_ptr->w;
+                }
+
+                ++extent_ptr;
+            }
+
+            if (proj > 0.0f) {
+                return false;
+            }
+
+            if (proj < result->penetration_depth) {
+                result->penetration_depth = proj;
+                result->collision_point.x = col_x;
+                result->collision_point.y = col_y;
+                result->collision_point.z = col_z;
+                result->collision_point.w = col_w;
+
+                if (result == a) {
+                    result->collision_normal = axis;
+                } else {
+                    result->collision_normal.x = -axis.x;
+                    result->collision_normal.y = -axis.y;
+                    result->collision_normal.z = -axis.z;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 bool OBB::SphereVsBox(OBB *a, OBB *b, OBB *result) {
     // TODO
+    return false;
 }
 
 bool OBB::SphereVsSphere(OBB *a, OBB *b, OBB *result) {
