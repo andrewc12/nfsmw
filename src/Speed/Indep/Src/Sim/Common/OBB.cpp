@@ -129,7 +129,7 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
             float col_z = b->position.z;
             float col_w = b->position.w;
 
-            // Process each extent
+            // Process each extent - match original pointer increment
             UMath::Vector4 *extent_ptr = b->extent;
             for (int j = 0; j < 3; ++j) {
                 float extent_proj = axis.x * extent_ptr->x + axis.y * extent_ptr->y + axis.z * extent_ptr->z;

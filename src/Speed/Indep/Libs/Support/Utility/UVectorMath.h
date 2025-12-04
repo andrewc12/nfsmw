@@ -28,6 +28,7 @@ void VU0_v4scaleaddxyz(const UMath::Vector4 &a, const float scaleby, const UMath
 float VU0_v4lengthsquare(const UMath::Vector4 &a);
 float VU0_v4lengthsquarexyz(const UMath::Vector4 &a);
 void VU0_v4subxyz(const UMath::Vector4 &a, const UMath::Vector4 &b, UMath::Vector4 &result);
+void VU0_v4addxyz(const UMath::Vector4 &a, const UMath::Vector4 &b, UMath::Vector4 &result);
 float VU0_v4dotprodxyz(const UMath::Vector4 &a, const UMath::Vector4 &b);
 void VU0_v4scale(const UMath::Vector4 &a, const float scaleby, UMath::Vector4 &result);
 void VU0_v4scalexyz(const UMath::Vector4 &a, const float scaleby, UMath::Vector4 &result);
@@ -280,6 +281,28 @@ inline void VU0_v4unit(const UMath::Vector4 &a, UMath::Vector4 &result) {
 inline void VU0_v4unitxyz(const UMath::Vector4 &a, UMath::Vector4 &result) {
     float rlen = VU0_rsqrt(VU0_v4lengthsquarexyz(a));
     VU0_v4scalexyz(a, rlen, result);
+}
+
+inline void VU0_v4subxyz(const UMath::Vector4 &a, const UMath::Vector4 &b, UMath::Vector4 &result) {
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    result.w = a.w - b.w;
+}
+
+inline void VU0_v4addxyz(const UMath::Vector4 &a, const UMath::Vector4 &b, UMath::Vector4 &result) {
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.w = a.w + b.w;
+}
+
+inline float VU0_v4dotprodxyz(const UMath::Vector4 &a, const UMath::Vector4 &b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+inline float VU0_v3dotprod(const UMath::Vector3 &a, const UMath::Vector3 &b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 inline float IntAsFloat(const int &i) {
