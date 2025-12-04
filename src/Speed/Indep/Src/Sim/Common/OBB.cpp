@@ -87,9 +87,10 @@ bool OBB::CheckOBBOverlap(OBB *other) {
 }
 
 bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
-    UMath::Vector4 rel_position;
-    UMath::Vector4 a_normal;
-    UMath::Vector4 collision_point;
+    // Force specific stack layout to match original assembly
+    UMath::Vector4 rel_position ATTRIBUTE_ALIGN(16);
+    UMath::Vector4 a_normal ATTRIBUTE_ALIGN(16);
+    UMath::Vector4 collision_point ATTRIBUTE_ALIGN(16);
     float projected_interval;
     float b_projected_interval;
     UMath::Vector4 *b_extent;
@@ -135,7 +136,8 @@ bool OBB::BoxVsBox(OBB *obbA, OBB *obbB, OBB *result) {
             normal_idx = 0;
             do {
                 b_projected_interval = VU0_v3dotprod(UMath::Vector4To3(a_normal), UMath::Vector4To3(*b_extent));
-                float abs_val = b_projected_interval < 0.0f ? -b_projected_interval : b_projected_interval;
+                float abs_val;
+                asm("fabs %0, %1" : "=f"(abs_val) : "f"(b_projected_interval));
                 projected_interval = projected_interval - abs_val;
 
                 if (0.0f < b_projected_interval) {
