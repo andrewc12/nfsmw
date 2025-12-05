@@ -123,6 +123,10 @@ inline void Scale(const Vector4 &a, const float s, Vector4 &r) {
     VU0_v4scale(a, s, r);
 }
 
+inline void Scalexyz(const UMath::Vector4 &a, const float s, Vector4 &r) {
+    VU0_v4scalexyz(a, s, r);
+}
+
 inline void ScaleAdd(const Vector3 &a, const float s, const Vector3 &b, Vector3 &r) {
     VU0_v3scaleadd(a, s, b, r);
 }
@@ -133,6 +137,10 @@ inline void ScaleAdd(const Vector4 &a, const float s, const Vector4 &b, Vector4 
 
 inline void ScaleAddxyz(const UMath::Vector4 &a, const float s, const UMath::Vector4 &b, Vector4 &r) {
     VU0_v4scaleaddxyz(a, s, b, r);
+}
+
+inline void Addxyz(const UMath::Vector4 &a, const UMath::Vector4 &b, Vector4 &r) {
+    VU0_v4addxyz(a, b, r);
 }
 
 inline void Sub(const Vector3 &a, const Vector3 &b, Vector3 &r) {

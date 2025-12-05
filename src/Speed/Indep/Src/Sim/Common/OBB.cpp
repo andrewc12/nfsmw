@@ -89,7 +89,87 @@ bool OBB::BoxVsBox(OBB *a, OBB *b, OBB *result) {
 }
 
 bool OBB::SphereVsBox(OBB *a, OBB *b, OBB *result) {
-    // TODO
+    UMath::Vector4 rPos;
+    const float radius = a->dimension[0];
+    float dists[3];
+    float abs_dists[3];
+    float penetration[3];
+
+    VU0_v4subxyz(a->position, b->position, rPos);
+
+    result->collision_point = UMath::Vector4::kIdentity;
+
+    for (int a_lp = 0; a_lp < 3; a_lp++) {
+        const float b_dim = b->dimension[a_lp];
+        float dist = VU0_v4dotprodxyz(rPos, b->normal[a_lp]);
+        dists[a_lp] = dist;
+
+        float abs_dist;
+        if (dist >= 0.0f) {
+            abs_dist = dist;
+        } else {
+            abs_dist = -dist;
+        }
+        abs_dists[a_lp] = abs_dist;
+
+        if (b_dim + radius <= abs_dist) {
+            return false;
+        }
+
+        penetration[a_lp] = abs_dist - (b_dim + radius);
+    }
+
+    if (abs_dists[0] <= b->dimension[0] && abs_dists[1] <= b->dimension[1] && abs_dists[2] <= b->dimension[2]) {
+        int nearestface = 0;
+        for (int i = 1; i < 3; i++) {
+            if (penetration[i] < penetration[nearestface]) {
+                nearestface = i;
+            }
+        }
+
+        float normal_dir;
+        if (dists[nearestface] >= 0.0f) {
+            normal_dir = 1.0f;
+        } else {
+            normal_dir = -1.0f;
+        }
+        result->penetration_depth = penetration[nearestface];
+        VU0_v4scalexyz(b->normal[nearestface], normal_dir, result->collision_normal);
+        VU0_v4scaleaddxyz(b->normal[nearestface], normal_dir * (penetration[nearestface] + radius), a->position, result->collision_point);
+    } else {
+        UMath::Vector4 *collision_point_ptr = &result->collision_point;
+        for (int i = 0; i < 3; i++) {
+            if (b->dimension[i] <= abs_dists[i]) {
+                float normal_dir;
+                if (dists[i] >= 0.0f) {
+                    normal_dir = 1.0f;
+                } else {
+                    normal_dir = -1.0f;
+                }
+                float planedist = penetration[i] + radius;
+                VU0_v4scaleaddxyz(b->normal[i], normal_dir * planedist, *collision_point_ptr, *collision_point_ptr);
+            }
+        }
+
+        float coldist = VU0_sqrt(VU0_v4lengthsquarexyz(result->collision_point));
+        if (coldist > radius) {
+            return false;
+        }
+        if (coldist == 0.0f) {
+            return false;
+        }
+
+        result->penetration_depth = coldist - radius;
+        float rlen = VU0_rsqrt(VU0_v4lengthsquare(result->collision_point));
+        VU0_v4scale(result->collision_point, rlen, result->collision_normal);
+        VU0_v4addxyz(result->collision_point, a->position, result->collision_point);
+    }
+
+    if (result != a) {
+        VU0_v4scalexyz(result->collision_normal, -1.0f, result->collision_normal);
+    }
+
+    return true;
 }
 
 bool OBB::SphereVsSphere(OBB *a, OBB *b, OBB *result) {
